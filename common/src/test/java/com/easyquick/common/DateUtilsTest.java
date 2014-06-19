@@ -1,6 +1,11 @@
-package com.easyquick.common.test;
+package com.easyquick.common;
 
 import static org.junit.Assert.*;
+
+import java.util.Collection;
+import java.util.Date;
+
+import javax.swing.text.StyledEditorKit.ForegroundAction;
 
 import org.junit.Test;
 
@@ -62,5 +67,45 @@ public class DateUtilsTest {
 	public void testGetDate() throws Exception {
 		System.out.println(DateUtils.getDate());
 	}
+	
+	@Test
+	public void testGetMonthLastDay() throws Exception {
+		System.out.println(DateUtils.getMonthLastDay(201402));
+	}
 
+	@Test
+	public void testGetBetweenMonth() throws Exception {
+		Collection<Integer> s= DateUtils.getBetweenMonth(201501, 201411);
+		for(Integer i : s){
+			System.out.println(i);
+		}
+		
+	}
+	
+	@Test
+	public void testGetBetweenMonths() throws Exception {
+		int s= DateUtils.getBetweenMonths(201501, 201411);
+		System.out.println(s);
+		
+	}
+	
+	@Test
+	public void testGetBetweenDate() throws Exception {
+		Collection<Date> s= DateUtils.getBetweenDate(
+				DateUtils.convertYYYYMMDDStringToDate("20140101"),
+				DateUtils.convertYYYYMMDDStringToDate("20140201"));
+		for(Date i : s){
+			System.out.println(i);
+		}
+		
+	}
+	
+	@Test
+	public void testGetBetweenDays() throws Exception {
+		int s= DateUtils.getBetweenDateDays(
+				DateUtils.convertYYYYMMDDStringToDate("20140101"),
+				DateUtils.convertYYYYMMDDStringToDate("20140201"));
+		System.out.println(s);
+		
+	}
 }

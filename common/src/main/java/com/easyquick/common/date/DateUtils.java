@@ -1,17 +1,22 @@
 /**
- * 与日期时间有关的类的包
+ * 与日期时间相关类的包
  */
 package com.easyquick.common.date;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Vector;
 
 /**
  * @author 王辉
- * 描述：日期工具类
+ * 日期工具类
  */
 public class DateUtils {
+	
+	public static final String YYYYMMDD = "yyyyMMdd";
+	public static final String YYYYMMDDHHmmss = "yyyyMMddHHmmss";
 	
 	/**
 	 * 获取日期中的年份
@@ -24,8 +29,7 @@ public class DateUtils {
 		cal.setTime(date);
 	    return cal.get(Calendar.YEAR);
 	}
-	
-	
+
 	/**
 	 * 获取日期中的月份
 	 * @param date 日期
@@ -127,7 +131,7 @@ public class DateUtils {
 	 * @throws Exception
 	 */
 	public static Date convertYYYYMMDDStringToDate(String dateString)throws Exception{
-		return convertStringToDate(dateString, "yyyyMMdd");
+		return convertStringToDate(dateString, YYYYMMDD);
 	}
 	
 	/**
@@ -137,9 +141,8 @@ public class DateUtils {
 	 * @throws Exception
 	 */
 	public static Date convertYYYYMMDDHHmmssStringToDate(String dateString)throws Exception{
-		return convertStringToDate(dateString, "yyyyMMddHHmmss");
+		return convertStringToDate(dateString, YYYYMMDDHHmmss);
 	}
-	
 	
 	/**
 	 * 转换字符串为日期类型
@@ -151,5 +154,143 @@ public class DateUtils {
 	public static Date convertStringToDate(String dateString, String format)throws Exception{
 		return new SimpleDateFormat(format).parse(dateString);
 	}
+
+	/**
+	 * 获取两个日期间间隔日期
+	 * @param startDate 开始日期
+	 * @param endDate 结束日期
+	 * @return Vector<Date> 间隔的日期集合
+	 * @throws Exception
+	 */
+	public static Collection<Date> getBetweenDate(
+			Date startDate, 
+			Date endDate) throws Exception{
+		Calendar startCalendar = getDateCalendar(startDate);
+		Calendar endCalendar = getDateCalendar(endDate);
+		Collection<Date> daysVector = new Vector<>();
+		
+		startCalendar.add(Calendar.DAY_OF_MONTH, 1);
+		while(!startCalendar.after(endCalendar)){
+			daysVector.add(startCalendar.getTime());
+			startCalendar.add(Calendar.DAY_OF_MONTH, 1);
+		}
+		
+		return daysVector;
+	}
 	
+	/**
+	 * 获取两个日期间隔天数
+	 * @param startDate 开始日期
+	 * @param endDate 结束日期
+	 * @return Integer 间隔的天数
+	 * @throws Exception
+	 */
+	public static Integer getBetweenDateDays(
+			Date startDate, 
+			Date endDate) throws Exception{
+		Calendar startCalendar = getDateCalendar(startDate);
+		Calendar endCalendar = getDateCalendar(endDate);
+		int result = 0;
+		
+		startCalendar.add(Calendar.DAY_OF_MONTH, 1);
+		while(!startCalendar.after(endCalendar)){
+			++result;
+			startCalendar.add(Calendar.DAY_OF_MONTH, 1);
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * 获取两个日期间隔月份
+	 * @param startMonth 开始月份(例如：201401)
+	 * @param endMonth 结束月份(例如：201402)
+	 * @return Collection<Integer> 间隔的月份集合
+	 * @throws Exception
+	 */
+	public static Collection<Integer> getBetweenMonth(
+			Integer startMonth, 
+			Integer endMonth) throws Exception{
+		
+		Calendar startCalendar = getMonthCalendar(startMonth);
+		Calendar endCalendar = getMonthCalendar(endMonth);
+		Collection<Integer> months = new Vector<>();
+				
+		startCalendar.add(Calendar.MONTH, 1);
+		while ( !startCalendar.after(endCalendar)) {
+			int year = startCalendar.get(Calendar.YEAR);
+			int month = startCalendar.get(Calendar.MONTH) + 1;
+			
+			months.add(year*100 + month);
+			startCalendar.add(Calendar.MONTH, 1);
+		}
+		
+		return months;
+	}
+	
+	/**
+	 * 获取两个月份间隔月份数
+	 * @param startMonth 开始月份(例如：201401)
+	 * @param endMonth 结束月份(例如：201402)
+	 * @return Integer 间隔的月份数
+	 * @throws Exception
+	 */
+	public static Integer getBetweenMonths(
+			Integer startMonth, 
+			Integer endMonth) throws Exception{
+		
+		Calendar startCalendar = getMonthCalendar(startMonth);
+		Calendar endCalendar = getMonthCalendar(endMonth);
+		Integer result = 0;
+				
+		startCalendar.add(Calendar.MONTH, 1);
+		while ( !startCalendar.after(endCalendar)) {
+			++result;
+			startCalendar.add(Calendar.MONTH, 1);
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * 获取月末日期
+	 * @param month 月份(例如：201401)
+	 * @return Date 日期实例
+	 * @throws Exception
+	 */
+	public static Date getMonthLastDay(Integer month) throws Exception{
+		
+		Calendar calendar = getMonthCalendar(month);
+		
+		calendar.set(Calendar.DATE, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+		
+		return calendar.getTime();
+	}
+	
+	/**
+	 * 获取月份的Calendar实例
+	 * @param month 月份
+	 * @return Calendar
+	 * @throws Exception
+	 */
+	public static Calendar getMonthCalendar(Integer month) throws Exception{
+		Calendar calendar = Calendar.getInstance();
+		
+		calendar.set(month/100, month-((month/100)*100)-1, 1);
+		
+		return calendar;
+	}
+	
+	/**
+	 * 获取日期的Calendar实例
+	 * @param date 日期
+	 * @return Calendar
+	 * @throws Exception
+	 */
+	public static Calendar getDateCalendar(Date date) throws Exception{
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(date);
+				
+		return calendar;
+	}
 }
