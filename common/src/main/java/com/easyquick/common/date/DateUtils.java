@@ -154,6 +154,7 @@ public class DateUtils {
 	public static Date convertStringToDate(String dateString, String format)throws Exception{
 		return new SimpleDateFormat(format).parse(dateString);
 	}
+	
 
 	/**
 	 * 获取两个日期间间隔日期
@@ -203,6 +204,33 @@ public class DateUtils {
 	
 	/**
 	 * 获取两个日期间隔月份
+	 * @param startMonth 开始月份
+	 * @param endMonth 结束月份
+	 * @return Collection<Integer> 间隔的月份集合
+	 * @throws Exception
+	 */
+	public static Collection<Integer> getBetweenMonth(
+			Date startMonth, 
+			Date endMonth) throws Exception{
+		
+		Calendar startCalendar = getDateCalendar(startMonth);
+		Calendar endCalendar = getDateCalendar(endMonth);
+		Collection<Integer> months = new Vector<>();
+				
+		startCalendar.add(Calendar.MONTH, 1);
+		while ( !startCalendar.after(endCalendar)) {
+			int year = startCalendar.get(Calendar.YEAR);
+			int month = startCalendar.get(Calendar.MONTH) + 1;
+			
+			months.add(year*100 + month);
+			startCalendar.add(Calendar.MONTH, 1);
+		}
+		
+		return months;
+	}
+	
+	/**
+	 * 获取两个日期间隔月份
 	 * @param startMonth 开始月份(例如：201401)
 	 * @param endMonth 结束月份(例如：201402)
 	 * @return Collection<Integer> 间隔的月份集合
@@ -226,6 +254,30 @@ public class DateUtils {
 		}
 		
 		return months;
+	}
+	
+	/**
+	 * 获取两个月份间隔月份数
+	 * @param startMonth 开始月份
+	 * @param endMonth 结束月份
+	 * @return Integer 间隔的月份数
+	 * @throws Exception
+	 */
+	public static Integer getBetweenMonths(
+			Date startMonth, 
+			Date endMonth) throws Exception{
+		
+		Calendar startCalendar = getDateCalendar(startMonth);
+		Calendar endCalendar = getDateCalendar(endMonth);
+		Integer result = 0;
+				
+		startCalendar.add(Calendar.MONTH, 1);
+		while ( !startCalendar.after(endCalendar)) {
+			++result;
+			startCalendar.add(Calendar.MONTH, 1);
+		}
+		
+		return result;
 	}
 	
 	/**
@@ -255,6 +307,22 @@ public class DateUtils {
 	/**
 	 * 获取月末日期
 	 * @param month 月份(例如：201401)
+	 * @return Date 日期实例
+	 * @throws Exception
+	 */
+	public static Date getMonthLastDay(Date month) throws Exception{
+		
+		Calendar calendar = getDateCalendar(month);
+		
+		calendar.set(Calendar.DATE, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+		
+		return calendar.getTime();
+	}
+	
+	
+	/**
+	 * 获取月末日期
+	 * @param month 月份
 	 * @return Date 日期实例
 	 * @throws Exception
 	 */
