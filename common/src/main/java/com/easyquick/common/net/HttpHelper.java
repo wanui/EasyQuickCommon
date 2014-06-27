@@ -13,7 +13,9 @@ import javax.xml.crypto.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -23,8 +25,12 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.conn.params.ConnConnectionPNames;
+import org.apache.http.conn.params.ConnRoutePNames;
+import org.apache.http.conn.params.ConnRouteParamBean;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.util.EntityUtils;
 
@@ -44,27 +50,29 @@ public class HttpHelper {
 	private CloseableHttpClient httpClient;
 	private HttpClientBuilder httpClientBuilder;
 	private HttpClientContext httpContext;
+	private HttpHost proxyHost;
+	private HttpHost targetHost;
 	private HttpGet httpGet;
 	private HttpPost httpPost;
 	
 	
-	public HttpHelper() {
-		init();
+	public HttpHelper(String host, int port) {
+		init(host, port);
 		httpClient =httpClientBuilder
 				.setUserAgent(USER_AGENT)
 				.build();
 	}
 	
-	public HttpHelper(String urlPrefix) {
-		init();
+	public HttpHelper(String host, int port, String urlPrefix) {
+		init(host, port);
 		httpClient =httpClientBuilder
 				.setUserAgent(USER_AGENT)
 				.build();
 		this.urlPrefix = urlPrefix;
 	}
 	
-	public HttpHelper(String urlPrefix, RequestConfig requestConfig) {
-		init();
+	public HttpHelper(String host, int port, String urlPrefix, RequestConfig requestConfig) {
+		init(host, port);
 		httpClient =httpClientBuilder
 				.setUserAgent(USER_AGENT)
 				.setDefaultRequestConfig(requestConfig)
@@ -72,11 +80,12 @@ public class HttpHelper {
 		this.urlPrefix = urlPrefix;
 	}
 	
-	private void init(){
-		HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
-		HttpClientContext httpContext = HttpClientContext.create();  
-		HttpGet httpGet = new HttpGet();
-		HttpPost httpPost = new HttpPost();
+	private void init(String targetHostName, int port){
+		httpClientBuilder = HttpClientBuilder.create();
+		httpContext = HttpClientContext.create();
+		targetHost= new HttpHost(targetHostName, port);
+		httpGet = new HttpGet();
+		httpPost = new HttpPost();
 	}
 	
 	/**
@@ -247,22 +256,18 @@ public class HttpHelper {
 		switch(httpMethod){
 			case GET:
 				httpGet.setURI(uri);
-				response = httpClient.execute(httpGet, httpContext);
+				response = this.execute(httpGet);
 				break;
 			case POST:
 				httpPost.setURI(uri);
 				httpPost.setEntity(new UrlEncodedFormEntity(data, DEFAUT_CHARSET));
-				response = httpClient.execute(httpPost, httpContext);
+				response = this.execute(httpPost);
 				break;
 			default:
 				throw new Exception("request only support method GET or POST");
 		}
 		
-		if(requestSuccess(response)){
-			return response;
-		}
-		
-		return null;
+		return response;
 	}
 	
 	/**
@@ -360,11 +365,43 @@ public class HttpHelper {
 	}
 	
 	/**
+	 * 设置代理服务器
+	 * @param host 代理服务器名称或IP
+	 * @param port 代理服务器端口
+	 */
+	public void setProxyHost(String host, int port){
+		this.proxyHost = new HttpHost(host, port);
+	}
+	
+	/**
 	 * 获取所有http协议头
 	 * @return Header[] http协议数组
 	 */
 	public Header[] getAllHeaders() {
 		return this.httpPost.getAllHeaders();
+	}
+	
+	/**
+	 * 执行请求
+	 * @param httpRequest 请求实例
+	 * @return CloseableHttpResponse 请求回应
+	 * @throws Exception
+	 */
+	private CloseableHttpResponse execute(HttpUriRequest httpRequest) throws Exception{
+		CloseableHttpResponse response = null;
+		
+		if (this.proxyHost != null) {
+			response = httpClient.execute(proxyHost, httpRequest, httpContext);
+		}
+		else {
+			response = httpClient.execute(httpRequest, httpContext);
+		}
+		
+		if(isRequestSuccess(response)){
+			return response;
+		}
+		
+		return null;
 	}
 	
 	/**
@@ -405,13 +442,13 @@ public class HttpHelper {
 	 * @return boolean true为成功
 	 * @throws Exception
 	 */
-	private boolean requestSuccess(HttpResponse response) throws Exception {
+	private boolean isRequestSuccess(HttpResponse response) throws Exception {
 		int statusCode = response.getStatusLine().getStatusCode();
 		if(statusCode == HTTP_STATUS_SUCCESS){
 			return true;
 		}
 		else {
-			throw new Exception("http request fail status code " + String.valueOf(statusCode));
+			throw new HttpComException(statusCode, "http request fail status code " + String.valueOf(statusCode));
 		}
 	}
 	
