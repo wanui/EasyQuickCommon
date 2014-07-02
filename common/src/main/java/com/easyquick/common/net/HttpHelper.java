@@ -45,8 +45,10 @@ public class HttpHelper {
 	private final String DEFAUT_CHARSET = "UTF-8";
 	private final String CONTENT_TYPE_XML = "text/xml; charset=UTF-8";
 	private final int HTTP_STATUS_SUCCESS = 200;
+	private final int HTTP_STATUS_REDIRECT = 302;
+	private final int DEFAUT_PORT = 80;
 	
-	private String urlPrefix;
+	private String urlPrefix = "";
 	private CloseableHttpClient httpClient;
 	private HttpClientBuilder httpClientBuilder;
 	private HttpClientContext httpContext;
@@ -55,6 +57,18 @@ public class HttpHelper {
 	private HttpGet httpGet;
 	private HttpPost httpPost;
 	
+	
+	@SuppressWarnings("unused")
+	private HttpHelper(){
+		
+	}
+	
+	public HttpHelper(String host) {
+		init(host, DEFAUT_PORT);
+		httpClient =httpClientBuilder
+				.setUserAgent(USER_AGENT)
+				.build();
+	}
 	
 	public HttpHelper(String host, int port) {
 		init(host, port);
@@ -73,6 +87,8 @@ public class HttpHelper {
 	
 	public HttpHelper(String host, int port, String urlPrefix, RequestConfig requestConfig) {
 		init(host, port);
+		RequestConfig.custom().setProxy(proxyHost);
+		
 		httpClient =httpClientBuilder
 				.setUserAgent(USER_AGENT)
 				.setDefaultRequestConfig(requestConfig)
@@ -390,16 +406,26 @@ public class HttpHelper {
 	private CloseableHttpResponse execute(HttpUriRequest httpRequest) throws Exception{
 		CloseableHttpResponse response = null;
 		
-		if (this.proxyHost != null) {
-			response = httpClient.execute(proxyHost, httpRequest, httpContext);
-		}
-		else {
-			response = httpClient.execute(httpRequest, httpContext);
+		response = httpClient.execute(targetHost, httpRequest, httpContext);
+		
+		try {
+			if(isRequestSuccess(response)){
+				return response;
+			}
+		} catch (HttpComException e) {
+			if(e.getStatusCode() == HTTP_STATUS_REDIRECT){
+				this.resetRequest();
+				URI uri = this.buildURI(response.getHeaders("location")[0].getValue());
+				httpGet.setURI(uri);
+				response = httpClient.execute(targetHost, httpGet, httpContext);
+				if (isRequestSuccess(response)) {
+					return response;
+				}
+			}
+			
+			throw e;
 		}
 		
-		if(isRequestSuccess(response)){
-			return response;
-		}
 		
 		return null;
 	}
