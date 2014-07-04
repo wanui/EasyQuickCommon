@@ -27,6 +27,7 @@ public class HttpHelperTest {
 		data.add(new BasicNameValuePair("postcheck", "true"));
 		//System.out.println(httpHelper.requestStringByPost("checklogin.ashx",data));
 		System.out.println(httpHelper.requestStringByGet("BookDetail.aspx?BookID=3554713"));
+		httpHelper.setProxyHost("BookDetail.aspx?BookID=3554713")
 	}
 
 }
